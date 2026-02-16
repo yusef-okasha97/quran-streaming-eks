@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: quran-app
-          image: yoyo7sniper97/quran-app:latest
+          image: yoyo7sniper97/Quran-app-argo:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5050
