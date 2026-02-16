@@ -5,7 +5,6 @@ metadata:
   namespace: nginx-app
 spec:
   replicas: 2
-  restartPolicy: Always
   selector:
     matchLabels:
       app: nginx
@@ -15,7 +14,8 @@ spec:
         app: nginx
     spec:
       containers:
-        - name: nginx
-          image: nginx:1.29.5
+        - name: quran-app
+          image: yoyo7sniper97/quran-app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
