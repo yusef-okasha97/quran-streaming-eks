@@ -20,25 +20,37 @@ app.get("/", (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>OpenMusicStream</title>
             <style>
+                :root {
+                    --bg-body: #f4f4f4;
+                    --bg-header: #ff5500;
+                    --bg-container: white;
+                    --text-heading: #333;
+                    --text-muted: #777;
+                    --bg-footer: #222;
+                    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
                 body {
                     font-family: Arial, sans-serif;
                     margin: 0;
                     padding: 0;
-                    background-color: #f4f4f4;
+                    background-color: var(--bg-body);
+                    transition: background-color 0.3s ease;
                 }
                 header {
-                    background-color: #ff5500;
+                    background-color: var(--bg-header);
                     color: white;
                     padding: 20px;
                     text-align: center;
+                    position: relative;
                 }
                 .container {
                     max-width: 900px;
                     margin: 20px auto;
-                    background: white;
+                    background: var(--bg-container);
                     border-radius: 8px;
                     overflow: hidden;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                    box-shadow: var(--shadow);
+                    transition: background-color 0.3s ease;
                 }
                 .banner {
                     width: 100%;
@@ -64,28 +76,39 @@ app.get("/", (req, res) => {
                 }
                 .song-info h3 {
                     margin: 0 0 5px;
-                    color: #333;
+                    color: var(--text-heading);
                 }
                 .song-info p {
                     margin: 0;
-                    color: #777;
+                    color: var(--text-muted);
                 }
                 footer {
                     text-align: center;
                     padding: 10px 20px;
-                    background-color: #222;
+                    background-color: var(--bg-footer);
                     color: white;
                 }
                 audio {
                     width: 100%;
                     margin-top: 10px;
                 }
+                html.dark {
+                    --bg-body: #1a1a1a;
+                    --bg-header: #c44a00;
+                    --bg-container: #2d2d2d;
+                    --text-heading: #e0e0e0;
+                    --text-muted: #a0a0a0;
+                    --bg-footer: #111;
+                    --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                }
             </style>
         </head>
         <body>
             <header>
                 <h1>your way to heaven - Manara project </h1>
-                <p></p>
+                <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="position:absolute; top:20px; right:20px; padding:8px 14px; border:none; border-radius:6px; background:rgba(255,255,255,0.25); color:white; cursor:pointer; font-size:14px;">
+                    🌙 Dark
+                </button>
             </header>
             <div class="container">
                 <div class="banner"></div>
@@ -136,6 +159,28 @@ app.get("/", (req, res) => {
                 // Event listeners for when audio plays
                 audio1.addEventListener('play', () => stopOtherAudios(audio1));
                 audio2.addEventListener('play', () => stopOtherAudios(audio2));
+
+                // Dark mode
+                const html = document.documentElement;
+                const themeBtn = document.getElementById('themeToggle');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (!localStorage.getItem('theme') && prefersDark) {
+                    localStorage.setItem('theme', 'dark');
+                }
+                const saved = localStorage.getItem('theme');
+                if (saved === 'dark') {
+                    html.classList.add('dark');
+                    themeBtn.textContent = '☀️ Light';
+                } else {
+                    html.classList.remove('dark');
+                    themeBtn.textContent = '🌙 Dark';
+                }
+                themeBtn.addEventListener('click', () => {
+                    html.classList.toggle('dark');
+                    const isDark = html.classList.contains('dark');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    themeBtn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+                });
             </script>
         </body>
         </html>
