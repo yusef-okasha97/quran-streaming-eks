@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    ports:
+      - "5050:5050"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=5050
+      - MONGO_URI=mongodb://mongo:27017/openmusicstream
+    depends_on:
+      - mongo
+    restart : always # ensure the app up all time "container"
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart : always
+
+volumes:
+  mongo-data:
+    
