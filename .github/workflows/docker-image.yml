@@ -28,7 +28,7 @@ jobs:
 
       - name: Push Docker Image
         run: |
-          docker push yoyo7sniper97/quran-app:latest
+          docker push yoyo7sniper97/quran-app-argo:latest
 
       - name: list data
         run: ls -la
