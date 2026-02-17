@@ -106,6 +106,10 @@ app.get("/", (req, res) => {
         <body>
             <header>
                 <h1>your way to heaven - Manara project </h1>
+                <div id="prayerTimer" style="position:absolute; top:20px; left:20px; padding:8px 14px; border-radius:6px; background:rgba(0,0,0,0.4); color:white; font-size:13px; text-align:left; min-width:180px;">
+                    <div style="font-weight:bold;">Next Prayer: <span id="prayerName">Loading...</span></div>
+                    <div style="margin-top:4px;">Time left: <span id="prayerCountdown">--:--:--</span></div>
+                </div>
                 <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="position:absolute; top:20px; right:20px; padding:8px 14px; border:none; border-radius:6px; background:rgba(255,255,255,0.25); color:white; cursor:pointer; font-size:14px;">
                     🌙 Dark
                 </button>
@@ -140,6 +144,7 @@ app.get("/", (req, res) => {
             <footer>
                 <p>&copy; 2025 OpenMusicStream. All rights reserved.</p>
             </footer>
+            <audio id="adhanAudio" src="/adhan.mp3" preload="auto"></audio>
             <script>
                 // Store reference to the audio elements
                 const audio1 = document.getElementById('audio1');
@@ -181,6 +186,79 @@ app.get("/", (req, res) => {
                     localStorage.setItem('theme', isDark ? 'dark' : 'light');
                     themeBtn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
                 });
+
+                // -------- Prayer countdown (Ramadan) --------
+                const prayerNameEl = document.getElementById('prayerName');
+                const prayerCountdownEl = document.getElementById('prayerCountdown');
+                const adhanAudio = document.getElementById('adhanAudio');
+
+                // اضبط الأوقات على مدينتك (بنظام 24 ساعة)
+                const prayerSchedule = [
+                    { key: 'fajr',   name: 'الفجر', time: '04:00' },
+                    { key: 'dhuhr',  name: 'الظهر', time: '12:00' },
+                    { key: 'asr',    name: 'العصر', time: '15:30' },
+                    { key: 'maghrib',name: 'المغرب', time: '18:10' },
+                    { key: 'isha',   name: 'العشاء', time: '19:30' }
+                ];
+
+                let lastPlayedKey = null;
+
+                function getTodayPrayerDate(timeStr) {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    const d = new Date();
+                    d.setHours(h, m, 0, 0);
+                    return d;
+                }
+
+                function getNextPrayer(now = new Date()) {
+                    // ابحث عن أول صلاة توقيتها بعد الآن
+                    for (const p of prayerSchedule) {
+                        const t = getTodayPrayerDate(p.time);
+                        if (t > now) return { ...p, date: t };
+                    }
+                    // لو خلصت اليوم، يبقى أول صلاة بكرة
+                    const tomorrow = new Date(now);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const first = prayerSchedule[0];
+                    const firstDate = new Date(tomorrow);
+                    const [h, m] = first.time.split(':').map(Number);
+                    firstDate.setHours(h, m, 0, 0);
+                    return { ...first, date: firstDate };
+                }
+
+                function formatDiff(ms) {
+                    if (ms < 0) ms = 0;
+                    const totalSec = Math.floor(ms / 1000);
+                    const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+                    const s = String(totalSec % 60).padStart(2, '0');
+                    return h + ':' + m + ':' + s;
+                }
+
+                function startPrayerTimer() {
+                    setInterval(() => {
+                        const now = new Date();
+                        const next = getNextPrayer(now);
+                        prayerNameEl.textContent = next.name;
+                        const diff = next.date - now;
+                        prayerCountdownEl.textContent = formatDiff(diff);
+
+                        // شغّل الأذان مرة واحدة عند دخول وقت الصلاة
+                        if (diff <= 0 && lastPlayedKey !== next.key) {
+                            if (adhanAudio) {
+                                adhanAudio.currentTime = 0;
+                                adhanAudio.play().catch(() => {});
+                            }
+                            lastPlayedKey = next.key;
+                        }
+                        // حضّر لصلاة جديدة لما نعدّي الوقت بفرق كبير
+                        if (diff > 60 * 1000) {
+                            lastPlayedKey = null;
+                        }
+                    }, 1000);
+                }
+
+                startPrayerTimer();
             </script>
         </body>
         </html>
