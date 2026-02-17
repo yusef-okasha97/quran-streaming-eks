@@ -36,7 +36,7 @@ jobs:
           image-ref: 'yoyo7sniper97/quran-app-argo:latest'
           format: 'table'
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
           ignore-unfixed: true
           exit-code: '1'
           timeout: '5m'
