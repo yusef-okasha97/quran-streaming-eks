@@ -83,10 +83,16 @@ app.get("/", (req, res) => {
                     color: var(--text-muted);
                 }
                 footer {
+                    position: fixed;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
                     text-align: center;
-                    padding: 10px 20px;
+                    padding: 6px 12px;
                     background-color: var(--bg-footer);
                     color: white;
+                    font-size: 12px;
+                    opacity: 0.75;
                 }
                 audio {
                     width: 100%;
@@ -106,9 +112,25 @@ app.get("/", (req, res) => {
         <body>
             <header>
                 <h1>your way to heaven - Manara project </h1>
-                <div id="prayerTimer" style="position:absolute; top:20px; left:20px; padding:8px 14px; border-radius:6px; background:rgba(0,0,0,0.4); color:white; font-size:13px; text-align:left; min-width:180px;">
-                    <div style="font-weight:bold;">Next Prayer: <span id="prayerName">Loading...</span></div>
-                    <div style="margin-top:4px;">Time left: <span id="prayerCountdown">--:--:--</span></div>
+                <div id="prayerTimer" style="
+                    position:absolute;
+                    top:15px;
+                    left:15px;
+                    padding:10px 16px;
+                    border-radius:10px;
+                    background:rgba(0,0,0,0.55);
+                    color:white;
+                    text-align:left;
+                    min-width:220px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.35);
+                    backdrop-filter:blur(6px);
+                    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                ">
+                    <div style="font-size:14px; opacity:0.9; margin-bottom:4px;">الصلاة القادمة</div>
+                    <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+                        <span id="prayerName" style="font-weight:600; font-size:16px;">Loading...</span>
+                        <span id="prayerCountdown" style="font-weight:700; font-size:18px; letter-spacing:1px;">--:--:--</span>
+                    </div>
                 </div>
                 <button id="themeToggle" type="button" aria-label="Toggle dark mode" style="position:absolute; top:20px; right:20px; padding:8px 14px; border:none; border-radius:6px; background:rgba(255,255,255,0.25); color:white; cursor:pointer; font-size:14px;">
                     🌙 Dark
@@ -144,15 +166,76 @@ app.get("/", (req, res) => {
             <footer>
                 <p>&copy; 2025 OpenMusicStream. All rights reserved.</p>
             </footer>
+            <!-- Adhan for prayer times -->
             <audio id="adhanAudio" src="/adhan.mp3" preload="auto"></audio>
+            <!-- Live Quran Radio (Egypt) -->
+            <audio id="quranRadio" src="https://stream.radiojar.com/8s5u5tpdtwzuv" preload="none"></audio>
+            <a
+                id="radioGardenLink"
+                href="https://www.holyquranradio.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="
+                    position: fixed;
+                    right: 18px;
+                    bottom: 128px;
+                    padding: 6px 10px;
+                    border-radius: 999px;
+                    background: rgba(0,0,0,0.65);
+                    color: #fff;
+                    text-decoration: none;
+                    font-size: 12px;
+                    z-index: 20;
+                "
+                title="فتح إذاعة القرآن الكريم (المصدر)"
+            >Source</a>
+            <button
+                id="radioToggle"
+                type="button"
+                aria-label="Toggle Quran Radio"
+                style="
+                    position: fixed;
+                    right: 18px;
+                    bottom: 70px;
+                    width: 52px;
+                    height: 52px;
+                    border-radius: 50%;
+                    border: none;
+                    background: rgba(0,0,0,0.75);
+                    color: #ffd35a;
+                    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 22px;
+                    z-index: 20;
+                ">
+                📻
+            </button>
+            <div
+                id="radioState"
+                style="
+                    position: fixed;
+                    right: 18px;
+                    bottom: 52px;
+                    width: 52px;
+                    text-align: center;
+                    font-size: 11px;
+                    color: rgba(255,255,255,0.9);
+                    z-index: 20;
+                    user-select: none;
+                "
+            >OFF</div>
             <script>
                 // Store reference to the audio elements
                 const audio1 = document.getElementById('audio1');
                 const audio2 = document.getElementById('audio2');
+                const quranRadio = document.getElementById('quranRadio');
 
                 // Function to stop all audios except the currently playing one
                 function stopOtherAudios(currentAudio) {
-                    const audios = [audio1, audio2]; // Add more if you have more audio elements
+                    const audios = [audio1, audio2, quranRadio]; // Add more if you have more audio elements
                     audios.forEach(audio => {
                         if (audio !== currentAudio) {
                             audio.pause();
@@ -187,43 +270,127 @@ app.get("/", (req, res) => {
                     themeBtn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
                 });
 
-                // -------- Prayer countdown (Ramadan) --------
+                // Quran Radio toggle
+                const radioToggle = document.getElementById('radioToggle');
+                const radioState = document.getElementById('radioState');
+                const radioGardenLink = document.getElementById('radioGardenLink');
+                let radioPlaying = false;
+
+                function updateRadioButton() {
+                    radioToggle.style.background = radioPlaying
+                        ? 'rgba(0, 120, 0, 0.85)'
+                        : 'rgba(0, 0, 0, 0.75)';
+                    radioToggle.style.color = radioPlaying ? '#ffffff' : '#ffd35a';
+                    radioToggle.title = radioPlaying ? 'إيقاف إذاعة القرآن الكريم' : 'تشغيل إذاعة القرآن الكريم';
+                    if (radioState) {
+                        radioState.textContent = radioPlaying ? 'ON' : 'OFF';
+                    }
+                }
+
+                radioToggle.addEventListener('click', () => {
+                    if (!quranRadio) return;
+                    if (radioPlaying) {
+                        quranRadio.pause();
+                        radioPlaying = false;
+                    } else {
+                        stopOtherAudios(quranRadio);
+                        quranRadio.play().then(() => {
+                            radioPlaying = true;
+                        }).catch(() => {
+                            // بعض المتصفحات قد تمنع التشغيل، أو قد يكون الرابط غير مدعوم
+                            radioPlaying = false;
+                            // كبديل: افتح Radio Garden في تبويب جديد
+                            if (radioGardenLink) {
+                                window.open(radioGardenLink.href, '_blank', 'noopener,noreferrer');
+                            }
+                        });
+                    }
+                    updateRadioButton();
+                });
+
+                if (radioToggle) {
+                    updateRadioButton();
+                }
+
+                // -------- Prayer countdown (Cairo) --------
                 const prayerNameEl = document.getElementById('prayerName');
                 const prayerCountdownEl = document.getElementById('prayerCountdown');
                 const adhanAudio = document.getElementById('adhanAudio');
 
-                // اضبط الأوقات على مدينتك (بنظام 24 ساعة)
-                const prayerSchedule = [
-                    { key: 'fajr',   name: 'الفجر', time: '04:00' },
-                    { key: 'dhuhr',  name: 'الظهر', time: '12:00' },
-                    { key: 'asr',    name: 'العصر', time: '15:30' },
-                    { key: 'maghrib',name: 'المغرب', time: '18:10' },
-                    { key: 'isha',   name: 'العشاء', time: '19:30' }
+                // Default fallback (لو الـ API فشل)
+                const defaultPrayerSchedule = [
+                    { key: 'fajr',    name: 'الفجر',  time: '04:00' },
+                    { key: 'dhuhr',   name: 'الظهر',  time: '12:00' },
+                    { key: 'asr',     name: 'العصر',  time: '15:30' },
+                    { key: 'maghrib', name: 'المغرب', time: '18:10' },
+                    { key: 'isha',    name: 'العشاء', time: '19:30' }
                 ];
 
+                let prayerSchedule = [...defaultPrayerSchedule];
                 let lastPlayedKey = null;
 
-                function getTodayPrayerDate(timeStr) {
-                    const [h, m] = timeStr.split(':').map(Number);
-                    const d = new Date();
-                    d.setHours(h, m, 0, 0);
-                    return d;
+                const CAIRO_TZ = 'Africa/Cairo';
+                const cairoFormatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: CAIRO_TZ,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+
+                function getCairoParts(date = new Date()) {
+                    const parts = cairoFormatter.formatToParts(date);
+                    const map = {};
+                    for (const p of parts) {
+                        if (p.type !== 'literal') map[p.type] = p.value;
+                    }
+                    return {
+                        year: Number(map.year),
+                        month: Number(map.month),
+                        day: Number(map.day),
+                        hour: Number(map.hour),
+                        minute: Number(map.minute),
+                        second: Number(map.second)
+                    };
                 }
 
-                function getNextPrayer(now = new Date()) {
-                    // ابحث عن أول صلاة توقيتها بعد الآن
+                // "Wall clock" Cairo time as UTC timestamp (independent from browser TZ)
+                function getCairoNowMs() {
+                    const p = getCairoParts();
+                    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+                }
+
+                function parseHHMM(timeStr) {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    return { h, m };
+                }
+
+                function getPrayerMsForDay(baseParts, timeStr, dayOffset = 0) {
+                    const { h, m } = parseHHMM(timeStr);
+                    return Date.UTC(
+                        baseParts.year,
+                        baseParts.month - 1,
+                        baseParts.day + dayOffset,
+                        h,
+                        m,
+                        0
+                    );
+                }
+
+                function getNextPrayer() {
+                    const nowMs = getCairoNowMs();
+                    const baseParts = getCairoParts();
+
                     for (const p of prayerSchedule) {
-                        const t = getTodayPrayerDate(p.time);
-                        if (t > now) return { ...p, date: t };
+                        const tMs = getPrayerMsForDay(baseParts, p.time, 0);
+                        if (tMs > nowMs) return { ...p, ms: tMs };
                     }
-                    // لو خلصت اليوم، يبقى أول صلاة بكرة
-                    const tomorrow = new Date(now);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    // بعد العشاء → أول صلاة بكرة
                     const first = prayerSchedule[0];
-                    const firstDate = new Date(tomorrow);
-                    const [h, m] = first.time.split(':').map(Number);
-                    firstDate.setHours(h, m, 0, 0);
-                    return { ...first, date: firstDate };
+                    return { ...first, ms: getPrayerMsForDay(baseParts, first.time, 1) };
                 }
 
                 function formatDiff(ms) {
@@ -235,30 +402,100 @@ app.get("/", (req, res) => {
                     return h + ':' + m + ':' + s;
                 }
 
-                function startPrayerTimer() {
-                    setInterval(() => {
-                        const now = new Date();
-                        const next = getNextPrayer(now);
-                        prayerNameEl.textContent = next.name;
-                        const diff = next.date - now;
-                        prayerCountdownEl.textContent = formatDiff(diff);
-
-                        // شغّل الأذان مرة واحدة عند دخول وقت الصلاة
-                        if (diff <= 0 && lastPlayedKey !== next.key) {
-                            if (adhanAudio) {
-                                adhanAudio.currentTime = 0;
-                                adhanAudio.play().catch(() => {});
-                            }
-                            lastPlayedKey = next.key;
-                        }
-                        // حضّر لصلاة جديدة لما نعدّي الوقت بفرق كبير
-                        if (diff > 60 * 1000) {
-                            lastPlayedKey = null;
-                        }
-                    }, 1000);
+                function normalizeApiTime(t) {
+                    // API sometimes returns "HH:MM (EET)" or "HH:MM"
+                    if (!t) return null;
+                    const hhmm = String(t).trim().slice(0, 5);
+                    return /^\d{2}:\d{2}$/.test(hhmm) ? hhmm : null;
                 }
 
-                startPrayerTimer();
+                async function loadCairoPrayerTimes() {
+                    try {
+                        const parts = getCairoParts();
+                        const y = String(parts.year);
+                        const m = String(parts.month).padStart(2, '0');
+                        const d = String(parts.day).padStart(2, '0');
+                        const cacheKey = `cairo_prayer_times_${y}-${m}-${d}`;
+
+                        const cached = localStorage.getItem(cacheKey);
+                        if (cached) {
+                            const parsed = JSON.parse(cached);
+                            if (Array.isArray(parsed) && parsed.length >= 5) {
+                                prayerSchedule = parsed;
+                                return;
+                            }
+                        }
+
+                        // AlAdhan timingsByCity (Cairo, Egypt)
+                        const url = 'https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5';
+                        const res = await fetch(url, { cache: 'no-store' });
+                        if (!res.ok) throw new Error(`timings fetch failed: ${res.status}`);
+                        const json = await res.json();
+                        const t = json?.data?.timings;
+                        if (!t) throw new Error('timings missing');
+
+                        const fajr = normalizeApiTime(t.Fajr);
+                        const dhuhr = normalizeApiTime(t.Dhuhr);
+                        const asr = normalizeApiTime(t.Asr);
+                        const maghrib = normalizeApiTime(t.Maghrib);
+                        const isha = normalizeApiTime(t.Isha);
+
+                        if (!fajr || !dhuhr || !asr || !maghrib || !isha) {
+                            throw new Error('invalid timings format');
+                        }
+
+                        prayerSchedule = [
+                            { key: 'fajr',    name: 'الفجر',  time: fajr },
+                            { key: 'dhuhr',   name: 'الظهر',  time: dhuhr },
+                            { key: 'asr',     name: 'العصر',  time: asr },
+                            { key: 'maghrib', name: 'المغرب', time: maghrib },
+                            { key: 'isha',    name: 'العشاء', time: isha }
+                        ];
+
+                        localStorage.setItem(cacheKey, JSON.stringify(prayerSchedule));
+                    } catch (e) {
+                        // fallback to defaultPrayerSchedule
+                        console.warn('Using fallback prayer times:', e);
+                        prayerSchedule = [...defaultPrayerSchedule];
+                    }
+                }
+
+                function startPrayerTimer() {
+                    const updateTimer = () => {
+                        try {
+                            const nowMs = getCairoNowMs();
+                            const next = getNextPrayer();
+                            if (prayerNameEl) prayerNameEl.textContent = next.name;
+                            const diff = next.ms - nowMs;
+                            if (prayerCountdownEl) prayerCountdownEl.textContent = formatDiff(diff);
+
+                            // شغّل الأذان مرة واحدة عند دخول وقت الصلاة
+                            if (diff <= 0 && lastPlayedKey !== next.key) {
+                                if (adhanAudio) {
+                                    adhanAudio.currentTime = 0;
+                                    adhanAudio.play().catch(() => {});
+                                }
+                                lastPlayedKey = next.key;
+                            }
+                            // حضّر لصلاة جديدة لما نعدّي الوقت بفرق كبير
+                            if (diff > 60 * 1000) {
+                                lastPlayedKey = null;
+                            }
+                        } catch (e) {
+                            console.error('Prayer timer error:', e);
+                            if (prayerNameEl) prayerNameEl.textContent = 'خطأ';
+                            if (prayerCountdownEl) prayerCountdownEl.textContent = '--:--:--';
+                        }
+                    };
+
+                    updateTimer();
+                    setInterval(updateTimer, 1000);
+                }
+
+                // Load official Cairo timings then start timer
+                loadCairoPrayerTimes().finally(() => {
+                    startPrayerTimer();
+                });
             </script>
         </body>
         </html>
