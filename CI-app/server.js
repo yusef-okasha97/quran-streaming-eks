@@ -415,7 +415,8 @@ app.get("/", (req, res) => {
                         const y = String(parts.year);
                         const m = String(parts.month).padStart(2, '0');
                         const d = String(parts.day).padStart(2, '0');
-                        const cacheKey = `cairo_prayer_times_${y}-${m}-${d}`;
+                        const cacheKey = 'cairo_prayer_times_' + y + '-' + m + '-' + d;
+
 
                         const cached = localStorage.getItem(cacheKey);
                         if (cached) {
@@ -429,7 +430,7 @@ app.get("/", (req, res) => {
                         // AlAdhan timingsByCity (Cairo, Egypt)
                         const url = 'https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5';
                         const res = await fetch(url, { cache: 'no-store' });
-                        if (!res.ok) throw new Error(`timings fetch failed: ${res.status}`);
+                        if (!res.ok) throw new Error('timings fetch failed: ' + res.status);
                         const json = await res.json();
                         const t = json?.data?.timings;
                         if (!t) throw new Error('timings missing');
