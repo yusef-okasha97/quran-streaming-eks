@@ -3,18 +3,45 @@ kind: Application
 metadata:
   name: monitoring
   namespace: argocd
+
 spec:
   project: default
 
   source:
-    repoURL:repoURL: https://prometheus-community.github.io/helm-charts
+    repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 65.0.0         
-    path: monitoring                
+    targetRevision: 65.0.0
+
     helm:
       releaseName: monitoring
-      valueFiles:
-        - values.yaml
+      values: |
+        grafana:
+          enabled: true
+          adminPassword: admin
+          service:
+            type: ClusterIP
+
+        prometheus:
+          prometheusSpec:
+            replicas: 1
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+
+        alertmanager:
+          alertmanagerSpec:
+            replicas: 1
+
+        kubeStateMetrics:
+          enabled: true
+
+        nodeExporter:
+          enabled: true
 
   destination:
     server: https://kubernetes.default.svc
