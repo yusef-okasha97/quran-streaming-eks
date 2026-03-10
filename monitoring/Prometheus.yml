@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: monitoring-prometheus
+  name: monitoring
   namespace: argocd
 spec:
   project: default
@@ -18,7 +18,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: mointoring
+    namespace: monitor
 
   syncPolicy:
     automated:
