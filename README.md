@@ -31,3 +31,23 @@ A production-ready DevOps project demonstrating a complete CI/CD and GitOps work
 ├── .github/workflows/    # CI Pipeline (Build, Scan, Push)
 ├── nginx/                # Kubernetes Manifests (Deployment & Service) tracked by ArgoCD
 └── README.md             # This file
+
+
+## 🚦 How to Use
+
+### 1. Prerequisites
+Before deploying, ensure you have the following ready:
+* A running Kubernetes Cluster (AWS EKS preferred).
+* **ArgoCD** installed and running on the cluster.
+* **Prometheus** and **Grafana** configured for cluster monitoring.
+* `kubectl` and `helm` installed locally to manage resources if needed.
+
+### 2. CI/CD Setup
+To enable the automated build and push pipeline:
+1. Go to your GitHub repository **Settings** > **Secrets and variables** > **Actions**.
+2. Add the following repository secrets:
+    * `DOCKER_USERNAME`: Your Docker Hub or container registry username.
+    * `DOCKER_PASSWORD`: Your Docker Hub password or access token.
+
+### 3. GitOps Configuration
+Connect your cluster's ArgoCD to this repository and point the Application path to the `nginx/` folder. ArgoCD will handle the creation of your Deployments and Services automatically.
