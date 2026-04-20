@@ -27,7 +27,7 @@ jobs:
             -Dsonar.projectKey=Sajda-Streaming-Platform
             -Dsonar.sources=.
             -Dsonar.nodejs.executable=/usr/bin/node
-            -Dsonar.javascript.node.maxspace=2048
+            -Dsonar.test.exclusions=CI-app/**/*
             -Dsonar.inclusions=**/*.py,**/*.yaml,**/*.yml,CI-app/docker-compose.yml,CI-app/package-lock.json,CI-app/package.json,CI-app/server.js
             -Dsonar.exclusions=README.md,package-lock.json,**/venv/**,**/.git/**
-            -Dsonar.test.exclusions=CI-app/**/*
+            
