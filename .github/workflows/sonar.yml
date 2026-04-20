@@ -1,0 +1,32 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main  
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          
+          args: >
+            -Dsonar.projectKey=sajda-streaming-slatform
+            -Dsonar.sources=.
+            -Dsonar.test.exclusions=CI-app/**/*
+            -Dsonar.exclusions=README.md, package-lock.json, **/venv/**, **/__pycache__/**, **/.git/**
+            -Dsonar.inclusions=**/*.py, **/*.yaml, **/*.yml, CI-app/docker-compose.yml, CI-app/package-lock.json, CI-app/package.json, CI-app/server.js
